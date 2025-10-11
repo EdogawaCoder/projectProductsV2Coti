@@ -23,106 +23,123 @@ import com.edo.repositories.ProductRepository;
 public class ProductController {
 
 
+    @PostMapping()
+    public ResponseEntity<?> insert(@RequestBody ProductRequestDto request) {
 
-	@PostMapping()
-	public ResponseEntity<?> insert(@RequestBody ProductRequestDto request) {
+        try {
+            var product = new Product();
 
-		try {
-			var product = new Product();
+            var productRepository = new ProductRepository();
+            var categoryRepository = new CategoryRepository();
 
-			var productRepository = new ProductRepository();
-			var categoryRepository = new CategoryRepository();
+            //
+            Category category = categoryRepository.findById(request.categoryId());
+            if (category == null) {
+                return ResponseEntity.badRequest().body("Category not found.");
+            }
 
-			//
-			Category category = categoryRepository.findById(request.categoryId());
-			if (category == null) {
-				return ResponseEntity.badRequest().body("Category not found.");
-			}
+            product.setId(UUID.randomUUID());
+            product.setName(request.name());
+            product.setPrice(request.price());
+            product.setQuantity(request.quantity());
+            product.setCategory(category);
+            product.setCreatedAt(java.time.LocalDateTime.now());
+            product.setActive(true);
 
-			product.setId(UUID.randomUUID());
-			product.setName(request.name());
-			product.setPrice(request.price());
-			product.setQuantity(request.quantity());
-			product.setCategory(category);
-			product.setCreatedAt(java.time.LocalDateTime.now());
-			product.setActive(true);
+            productRepository.insert(product);
 
-			productRepository.insert(product);
+            return ResponseEntity.ok(product);
+        } catch (Exception e) {
+            ResponseEntity.internalServerError().body(e.getMessage());
+        }
 
-			return ResponseEntity.ok(product);
-		} catch (Exception e) {
-			ResponseEntity.internalServerError().body(e.getMessage());
-		}
+        return ResponseEntity.ok().body(null);
 
-		return ResponseEntity.ok().body(null);
+    }
 
-	}
-	
-	@PutMapping("{id}")
-	public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody ProductRequestDto request) {
-		try {
-			try {
-				var product = new Product();
+    @PutMapping("{id}")
+    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody ProductRequestDto request) {
+        try {
+            try {
+                var product = new Product();
 
-				var productRepository = new ProductRepository();
+                var productRepository = new ProductRepository();
 
-				product.setId(id);
-				product.setName(request.name());
-				product.setPrice(request.price());
-				product.setQuantity(request.quantity());
-				product.setCategory(new Category());
-				product.getCategory().setId(request.categoryId());
+                product.setId(id);
+                product.setName(request.name());
+                product.setPrice(request.price());
+                product.setQuantity(request.quantity());
+                product.setCategory(new Category());
+                product.getCategory().setId(request.categoryId());
 
-				if (productRepository.update(product)) {
-					return ResponseEntity.ok().body("Product updated successfully.");
-				} else {
-					return ResponseEntity.status(404).body("Product not found.");
-				}
+                if (productRepository.update(product)) {
+                    return ResponseEntity.ok().body("Product updated successfully.");
+                } else {
+                    return ResponseEntity.status(404).body("Product not found.");
+                }
 
-			} catch (Exception e) {
-				ResponseEntity.internalServerError().body(e.getMessage());
-			}
+            } catch (Exception e) {
+                ResponseEntity.internalServerError().body(e.getMessage());
+            }
 
-		} catch (Exception e) {
-			ResponseEntity.internalServerError().body(e.getMessage());
-		}
-		return ResponseEntity.ok().body(null);
-	}
+        } catch (Exception e) {
+            ResponseEntity.internalServerError().body(e.getMessage());
+        }
+        return ResponseEntity.ok().body(null);
+    }
 
-	
 
-	@DeleteMapping("{id}")
-	public ResponseEntity<?> delete(@PathVariable UUID id) {
-		try {
-			
-			var productRepository = new ProductRepository();
+    @DeleteMapping("{id}")
+    public ResponseEntity<?> delete(@PathVariable UUID id) {
+        try {
 
-			if (productRepository.delete(id)) {
-				return ResponseEntity.ok().body("Product deleted successfully.");
-			} else {
-				return ResponseEntity.status(404).body("Product not found.");
-			}
-		} catch (Exception e) {
-			ResponseEntity.internalServerError().body(e.getMessage());
-		}
-		
-		return null;
+            var productRepository = new ProductRepository();
 
-	}
+            if (productRepository.delete(id)) {
+                return ResponseEntity.ok().body("Product deleted successfully.");
+            } else {
+                return ResponseEntity.status(404).body("Product not found.");
+            }
+        } catch (Exception e) {
+            ResponseEntity.internalServerError().body(e.getMessage());
+        }
 
-	@GetMapping
-	public ResponseEntity<?> getAll() {
-		
-		try {
-			var productRepository = new ProductRepository();
-			
-			var list = productRepository.findAll();
-			
-			return ResponseEntity.ok().body(list);
-		} 
-		catch (Exception e) {
-			return ResponseEntity.internalServerError().body(e.getMessage());
-		}
-		
-	}
+        return null;
+
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAll() {
+
+        try {
+            var productRepository = new ProductRepository();
+
+            var list = productRepository.findAll();
+
+            return ResponseEntity.ok().body(list);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("{id}")
+    public ResponseEntity<?> getById(@PathVariable UUID id) {
+
+        try {
+            var productRepository = new ProductRepository();
+            var product = productRepository.findByID(id);
+
+            if (product != null) {
+                // return 200 Status
+                return ResponseEntity.ok().body(product);
+            } else {
+                return ResponseEntity.status(404).body("Product not found.");
+
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
 }

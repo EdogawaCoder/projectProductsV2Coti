@@ -133,6 +133,60 @@ public class ProductRepository {
 		return list;
 	}
 
+    // to search through the ID.
+    public Product findByID(UUID id) throws Exception {
+
+        var connection = ConnectionFactory.getConnection();
+
+
+        var sql = """
+				select
+					p.id,
+					p.name,
+					p.price,
+					p.quantity,
+					p.created_at,
+					p.active,
+					 c. id as idcategory,
+					 c.name as namecategory
+				from product p
+				inner join category c
+				on c.id = p.category_id
+				where p.active = true
+				and p.id = ?
+				""";
+
+
+        var statement = connection.prepareStatement(sql);
+        statement.setObject(1, id);
+
+        var result = statement.executeQuery();
+
+        Product product = null;
+
+        if (result.next()) {
+
+            product = new Product();
+            product.setCategory(new Category());
+
+            product.setId(UUID.fromString(result.getString("id")));
+            product.setName(result.getString("name"));
+            product.setPrice(BigDecimal.valueOf(result.getDouble("price")));
+            product.setQuantity(result.getInt("quantity"));
+            product.setCreatedAt(result.getTimestamp("created_at").toLocalDateTime());
+            product.setActive(result.getBoolean("active"));
+
+            product.getCategory().setId(UUID.fromString(result.getString("idcategory")));
+            product.getCategory().setName(result.getString("namecategory"));
+
+
+        }
+
+        connection.close();
+        return product;
+    }
+
+
 	// Total quantity per products on categories.
 	public List<QntSumCategoryResDto> groupByQuantityCategory() throws Exception {
 		var list = new ArrayList<QntSumCategoryResDto>();
